@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="id" data-tema="terang">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Planner Harian — perencana harian mahasiswa Sistem Informasi. Bekerja offline tanpa framework.">
+  <title>Planner Harian</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- ===================== KOP APLIKASI ===================== -->
+  <header class="kop">
+    <div class="kop-teks">
+      <span class="kop-logo" aria-hidden="true">🗓️</span>
+      <div>
+        <h1>Planner Harian</h1>
+        <p class="kop-sub">Perencana harian mahasiswa Sistem Informasi</p>
+      </div>
+    </div>
+    <button type="button" id="tombolTema" class="tombol tombol-krem" aria-pressed="false">
+      <span id="ikonTema" aria-hidden="true">🌙</span>
+      <span id="labelTema">Mode gelap</span>
+    </button>
+  </header>
+
+  <!-- ===================== NAVIGASI TAB ===================== -->
+  <nav class="tab-navigasi" role="tablist" aria-label="Navigasi utama">
+    <button type="button" class="tab" role="tab" id="tab-hariini"
+            aria-controls="panel-hariini" aria-selected="true" data-tab="hariini">📅 Hari Ini</button>
+    <button type="button" class="tab" role="tab" id="tab-kebiasaan"
+            aria-controls="panel-kebiasaan" aria-selected="false" tabindex="-1" data-tab="kebiasaan">✅ Kebiasaan</button>
+    <button type="button" class="tab" role="tab" id="tab-pomodoro"
+            aria-controls="panel-pomodoro" aria-selected="false" tabindex="-1" data-tab="pomodoro">🍅 Pomodoro</button>
+    <button type="button" class="tab" role="tab" id="tab-statistik"
+            aria-controls="panel-statistik" aria-selected="false" tabindex="-1" data-tab="statistik">📊 Statistik</button>
+    <button type="button" class="tab" role="tab" id="tab-pengaturan"
+            aria-controls="panel-pengaturan" aria-selected="false" tabindex="-1" data-tab="pengaturan">⚙️ Pengaturan</button>
+  </nav>
+
+  <main id="konten">
+
+    <!-- ======================================================
+         PANEL 1 — HARI INI
+         ====================================================== -->
+    <section class="panel aktif" id="panel-hariini" role="tabpanel" aria-labelledby="tab-hariini" tabindex="0">
+
+      <!-- Navigasi tanggal & salin jadwal -->
+      <div class="kartu bar-tanggal">
+        <button type="button" id="tombolSebelumnya" class="tombol tombol-krem">← Sebelumnya</button>
+        <div class="pusat-tanggal">
+          <h2 id="labelTanggal">—</h2>
+          <span id="labelHari" class="redup">—</span>
+        </div>
+        <button type="button" id="tombolHariIni" class="tombol tombol-krem">Hari ini</button>
+        <button type="button" id="tombolBerikutnya" class="tombol tombol-krem">Berikutnya →</button>
+        <button type="button" id="tombolSalin" class="tombol tombol-krem"
+                aria-expanded="false" aria-controls="areaSalin">🧬 Salin jadwal</button>
+      </div>
+
+      <div class="kartu area-salin" id="areaSalin" hidden>
+        <label for="salinKeTanggal">Salin seluruh blok hari ini ke tanggal:</label>
+        <div class="baris">
+          <input type="date" id="salinKeTanggal">
+          <button type="button" id="tombolSalinYa" class="tombol tombol-utama">Salin</button>
+          <button type="button" id="tombolSalinBatal" class="tombol tombol-krem">Batal</button>
+        </div>
+        <p class="redup" id="pesanSalin" role="status"></p>
+      </div>
+
+      <!-- Ringkasan hari + peringatan bentrok -->
+      <div class="kartu">
+        <div class="kepala-kartu">
+          <h3>Ringkasan hari</h3>
+          <span class="pil" id="labelSelesai">0% selesai</span>
+        </div>
+        <div class="bar-progres" role="progressbar" id="barSelesaiWadah"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+             aria-label="Persentase blok selesai hari ini">
+          <div class="isi-progres" id="barSelesai" style="width:0%"></div>
+        </div>
+        <p class="redup" id="ringkasanHari">Belum ada blok pada tanggal ini.</p>
+
+        <div class="peringatan" id="kotakBentrok" hidden>
+          <strong>⚠️ Jadwal bentrok</strong>
+          <ul id="daftarBentrok"></ul>
+        </div>
+      </div>
+
+      <div class="grid-dua">
+        <!-- Form blok -->
+        <div class="kartu">
+          <div class="kepala-kartu">
+            <h3 id="judulFormBlok">Tambah blok waktu</h3>
+            <button type="button" id="blokBatal" class="tombol tombol-krem" hidden>Batal ubah</button>
+          </div>
+          <form id="formBlok" novalidate>
+            <input type="hidden" id="blokId">
+            <div class="medan">
+              <label for="blokJudul">Judul kegiatan</label>
+              <input type="text" id="blokJudul" placeholder="mis. Belajar basis data"
+                     autocomplete="off" maxlength="80" required>
+            </div>
+            <div class="baris-medan">
+              <div class="medan">
+                <label for="blokKategori">Kategori</label>
+                <select id="blokKategori"></select>
+              </div>
+              <div class="medan">
+                <label for="blokMulai">Jam mulai</label>
+                <input type="time" id="blokMulai" value="08:00" step="300" required>
+              </div>
+              <div class="medan">
+                <label for="blokSelesai">Jam selesai</label>
+                <input type="time" id="blokSelesai" value="09:00" step="300" required>
+              </div>
+            </div>
+            <div class="medan">
+              <label for="blokCatatan">Catatan blok (opsional)</label>
+              <textarea id="blokCatatan" rows="2" maxlength="300"
+                        placeholder="mis. bawa buku paket"></textarea>
+            </div>
+            <label class="cek">
+              <input type="checkbox" id="blokCentang"> Tandai blok ini selesai
+            </label>
+            <p class="galat" id="pesanBlok" role="alert"></p>
+            <button type="submit" class="tombol tombol-utama" id="tombolSimpanBlok">Simpan blok</button>
+          </form>
+        </div>
+
+        <!-- Timeline -->
+        <div class="kartu kartu-lebar">
+          <div class="kepala-kartu">
+            <h3>Timeline 05:00 – 23:00</h3>
+            <span class="redup" id="keteranganTimeline">Klik blok untuk mengubah</span>
+          </div>
+          <div class="timeline" id="timeline">
+            <div class="label-jam" id="labelJam"></div>
+            <div class="area-blok" id="areaBlok"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Catatan harian -->
+      <div class="kartu">
+        <h3>Catatan harian</h3>
+        <p class="redup">Tersimpan otomatis untuk tanggal yang sedang dibuka.</p>
+        <label for="catatanHarian" class="redup">Tulis catatan untuk tanggal ini</label>
+        <textarea id="catatanHarian" rows="3" maxlength="2000"
+                  placeholder="Tulis catatan bebas untuk tanggal ini…"></textarea>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         PANEL 2 — KEBIASAAN
+         ====================================================== -->
+    <section class="panel" id="panel-kebiasaan" role="tabpanel" aria-labelledby="tab-kebiasaan" tabindex="0" hidden>
+
+      <div class="kartu">
+        <div class="kepala-kartu">
+          <h3 id="judulFormKebiasaan">Tambah kebiasaan</h3>
+          <button type="button" id="kebiasaanBatal" class="tombol tombol-krem" hidden>Batal ubah</button>
+        </div>
+        <form id="formKebiasaan" novalidate>
+          <input type="hidden" id="kebiasaanId">
+          <div class="baris-medan">
+            <div class="medan">
+              <label for="kebiasaanNama">Nama kebiasaan</label>
+              <input type="text" id="kebiasaanNama" placeholder="mis. Minum air 8 gelas"
+                     autocomplete="off" maxlength="60" required>
+            </div>
+            <div class="medan medan-kecil">
+              <label for="kebiasaanIkon">Ikon (emoji)</label>
+              <input type="text" id="kebiasaanIkon" placeholder="💧" maxlength="4" autocomplete="off">
+            </div>
+            <div class="medan medan-kecil">
+              <label for="kebiasaanTarget">Target harian</label>
+              <input type="number" id="kebiasaanTarget" min="1" max="999" value="1">
+            </div>
+          </div>
+          <p class="galat" id="pesanKebiasaan" role="alert"></p>
+          <button type="submit" class="tombol tombol-utama">Simpan kebiasaan</button>
+        </form>
+      </div>
+
+      <div class="kartu">
+        <div class="kepala-kartu">
+          <h3>Daftar kebiasaan</h3>
+          <span class="redup">Centang hari yang berhasil — grid menampilkan 7 hari terakhir</span>
+        </div>
+        <div id="daftarKebiasaan" class="daftar-kebiasaan"></div>
+        <p class="kosong" id="kosongKebiasaan" hidden>Belum ada kebiasaan. Tambahkan lewat formulir di atas.</p>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         PANEL 3 — POMODORO
+         ====================================================== -->
+    <section class="panel" id="panel-pomodoro" role="tabpanel" aria-labelledby="tab-pomodoro" tabindex="0" hidden>
+
+      <div class="grid-dua">
+        <div class="kartu kartu-tengah">
+          <div class="layar-pomodoro">
+            <svg viewBox="0 0 260 260" class="cincin" aria-hidden="true">
+              <circle class="cincin-latar" cx="130" cy="130" r="110"></circle>
+              <circle class="cincin-isi" id="cincinIsi" cx="130" cy="130" r="110"></circle>
+            </svg>
+            <div class="teks-pomodoro">
+              <div id="pomodoroJenis" class="pomodoro-jenis">Fokus</div>
+              <div id="pomodoroWaktu" class="pomodoro-waktu" aria-live="off">25:00</div>
+              <div id="pomodoroSesi" class="redup">Sesi 1/4</div>
+            </div>
+          </div>
+
+          <div class="baris tombol-pomodoro">
+            <button type="button" id="pomodoroMulai" class="tombol tombol-utama">▶ Mulai</button>
+            <button type="button" id="pomodoroJeda" class="tombol tombol-krem" disabled>⏸ Jeda</button>
+            <button type="button" id="pomodoroLanjut" class="tombol tombol-utama" hidden>▶ Lanjut</button>
+            <button type="button" id="pomodoroReset" class="tombol tombol-krem">↺ Reset</button>
+            <button type="button" id="pomodoroLewati" class="tombol tombol-krem">⏭ Lewati</button>
+          </div>
+          <p class="galat" id="pesanPomodoro" role="status"></p>
+        </div>
+
+        <div class="kartu">
+          <h3>Sedang dikerjakan</h3>
+          <div class="medan">
+            <label for="pomodoroKaitan">Kaitkan sesi fokus dengan blok belajar atau kategori</label>
+            <select id="pomodoroKaitan">
+              <option value="">— Tanpa kaitan —</option>
+            </select>
+          </div>
+          <p class="redup">Sesi fokus yang selesai otomatis dicatat dan masuk ke tab Statistik.</p>
+
+          <h3 class="jarak-atas">Ringkasan</h3>
+          <ul class="daftar-info">
+            <li><span>Sesi fokus hari ini</span><strong id="pomodoroHariIni">0</strong></li>
+            <li><span>Sesi fokus minggu ini</span><strong id="pomodoroMinggu">0</strong></li>
+            <li><span>Siklus berjalan</span><strong id="pomodoroSiklus">0 sesi selesai</strong></li>
+            <li><span>Bunyi penanda</span><strong id="pomodoroBunyi">Aktif</strong></li>
+          </ul>
+
+          <div class="medan jarak-atas">
+            <label for="pomodoroUjiBunyi">Uji coba bunyi penanda (Web Audio API)</label>
+            <button type="button" id="pomodoroUjiBunyi" class="tombol tombol-krem">🔔 Bunyikan sekarang</button>
+          </div>
+
+          <p class="redup jarak-atas">
+            Timer dihitung dari selisih waktu (timestamp), sehingga tetap akurat walaupun tab
+            berpindah ke latar belakang. Tanpa notifikasi browser karena sering diblokir di <code>file://</code>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         PANEL 4 — STATISTIK
+         ====================================================== -->
+    <section class="panel" id="panel-statistik" role="tabpanel" aria-labelledby="tab-statistik" tabindex="0" hidden>
+
+      <div class="kartu bar-tanggal">
+        <button type="button" id="mingguSebelumnya" class="tombol tombol-krem">← Minggu sebelumnya</button>
+        <div class="pusat-tanggal">
+          <h2 id="labelMinggu">—</h2>
+          <span class="redup" id="labelMingguRentang">—</span>
+        </div>
+        <button type="button" id="mingguIni" class="tombol tombol-krem">Minggu ini</button>
+        <button type="button" id="mingguBerikutnya" class="tombol tombol-krem">Minggu berikutnya →</button>
+      </div>
+
+      <div class="kartu">
+        <div class="kepala-kartu">
+          <h3>Target belajar mingguan</h3>
+          <span class="pil" id="labelTarget">—</span>
+        </div>
+        <div class="bar-progres bar-progres-besar" role="progressbar" id="barTargetWadah"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+             aria-label="Capaian target belajar mingguan">
+          <div class="isi-progres" id="barTarget" style="width:0%"></div>
+        </div>
+        <p class="redup" id="keteranganTarget">Atur target pada tab Pengaturan.</p>
+      </div>
+
+      <div class="kartu">
+        <h3>Grafik jam per hari</h3>
+        <div class="wadah-grafik">
+          <svg id="grafikBatang" viewBox="0 0 700 300" role="img"
+               aria-label="Grafik batang total jam per hari Senin sampai Minggu"></svg>
+        </div>
+        <p class="redup" id="ketGrafik">Belum ada data pada minggu ini.</p>
+      </div>
+
+      <div class="grid-kartu-statistik" id="kartuStatistik">
+        <div class="kartu kartu-kecil"><span class="redup">Total jam</span><strong id="statTotal">0 jam</strong></div>
+        <div class="kartu kartu-kecil"><span class="redup">Total jam belajar</span><strong id="statBelajar">0 jam</strong></div>
+        <div class="kartu kartu-kecil"><span class="redup">Sesi Pomodoro</span><strong id="statPomodoro">0 sesi</strong></div>
+        <div class="kartu kartu-kecil"><span class="redup">Kebiasaan terpenuhi</span><strong id="statKebiasaan">0%</strong></div>
+        <div class="kartu kartu-kecil"><span class="redup">Hari paling produktif</span><strong id="statProduktif">—</strong></div>
+      </div>
+
+      <div class="kartu">
+        <h3>Jam per kategori</h3>
+        <table class="tabel" id="tabelKategori">
+          <thead>
+            <tr><th scope="col">Kategori</th><th scope="col">Menit</th><th scope="col">Jam</th></tr>
+          </thead>
+          <tbody id="isiTabelKategori">
+            <tr><td colspan="3" class="redup">Belum ada data.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ======================================================
+         PANEL 5 — PENGATURAN
+         ====================================================== -->
+    <section class="panel" id="panel-pengaturan" role="tabpanel" aria-labelledby="tab-pengaturan" tabindex="0" hidden>
+
+      <div class="grid-dua">
+        <div class="kartu">
+          <h3>Tampilan &amp; umpan balik</h3>
+          <fieldset class="medan">
+            <legend>Tema tampilan</legend>
+            <label class="cek"><input type="radio" name="tema" id="temaTerang" value="terang" checked> ☀️ Terang</label>
+            <label class="cek"><input type="radio" name="tema" id="temaGelap" value="gelap"> 🌙 Gelap</label>
+          </fieldset>
+          <label class="cek">
+            <input type="checkbox" id="setBunyi"> Bunyi penanda saat sesi Pomodoro selesai
+          </label>
+
+          <h3 class="jarak-atas">Durasi Pomodoro</h3>
+          <div class="baris-medan">
+            <div class="medan">
+              <label for="setFokus">Fokus (menit)</label>
+              <input type="number" id="setFokus" min="1" max="180" value="25">
+            </div>
+            <div class="medan">
+              <label for="setPendek">Istirahat pendek (menit)</label>
+              <input type="number" id="setPendek" min="1" max="60" value="5">
+            </div>
+            <div class="medan">
+              <label for="setPanjang">Istirahat panjang (menit)</label>
+              <input type="number" id="setPanjang" min="1" max="120" value="15">
+            </div>
+            <div class="medan">
+              <label for="setSiklus">Sesi per siklus</label>
+              <input type="number" id="setSiklus" min="1" max="12" value="4">
+            </div>
+          </div>
+
+          <div class="medan jarak-atas">
+            <label for="setTargetMinggu">Target belajar mingguan (jam)</label>
+            <input type="number" id="setTargetMinggu" min="0" max="168" step="0.5" value="10">
+          </div>
+          <p class="galat" id="pesanPengaturan" role="status"></p>
+        </div>
+
+        <div class="kartu">
+          <h3>Kelola kategori</h3>
+          <ul class="daftar-kategori" id="daftarKategori"></ul>
+          <form id="formKategori" class="baris-medan jarak-atas" novalidate>
+            <div class="medan">
+              <label for="kategoriNama">Nama kategori baru</label>
+              <input type="text" id="kategoriNama" placeholder="mis. Proyek" maxlength="30" autocomplete="off">
+            </div>
+            <div class="medan medan-kecil">
+              <label for="kategoriWarna">Warna</label>
+              <input type="color" id="kategoriWarna" value="#4f7cff">
+            </div>
+            <div class="medan medan-kecil medan-aksi">
+              <span class="ruang-label" aria-hidden="true">&nbsp;</span>
+              <button type="submit" class="tombol tombol-utama">Tambah</button>
+            </div>
+          </form>
+          <p class="galat" id="pesanKategori" role="alert"></p>
+        </div>
+      </div>
+
+      <div class="kartu">
+        <h3>Data</h3>
+        <p class="redup">
+          Data tersimpan otomatis di <code>localStorage</code> dengan versi skema
+          (<code id="labelVersiSkema">1</code>). Ekspor berupa file JSON yang bisa diimpor kembali.
+        </p>
+        <div class="baris data-aksi">
+          <button type="button" id="tombolEkspor" class="tombol tombol-utama">⬇️ Ekspor JSON</button>
+          <label class="tombol tombol-krem label-impor" for="inputImpor">⬆️ Impor JSON</label>
+          <input type="file" id="inputImpor" accept="application/json,.json" hidden>
+          <button type="button" id="tombolContoh" class="tombol tombol-krem">🧩 Muat contoh</button>
+          <button type="button" id="tombolHapus" class="tombol tombol-bahaya">🗑️ Hapus semua data</button>
+        </div>
+        <p class="galat" id="pesanData" role="status"></p>
+
+        <h3 class="jarak-atas">Pratinjau data (JSON)</h3>
+        <textarea id="pratinjauJSON" rows="6" readonly aria-label="Pratinjau data JSON"></textarea>
+      </div>
+    </section>
+  </main>
+
+  <footer class="kaki">
+    <p>Planner Harian — HTML, CSS, JavaScript murni. Berjalan offline melalui <code>file://</code>.
+       Buka <a href="tes.html">tes.html</a> untuk melihat hasil pengecekan otomatis.</p>
+  </footer>
+
+  <!-- Toast notifikasi -->
+  <div class="notifikasi" id="notifikasi" role="status" aria-live="polite" hidden></div>
+
+  <!-- Urutan skrip penting: logika dulu, lalu data contoh, lalu antarmuka -->
+  <script src="logika.js"></script>
+  <script src="contoh.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

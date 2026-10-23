@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id" data-tema="terang">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tes Planner Harian</title>
+  <style>
+    /* Gaya sederhana khusus halaman tes (terinspirasi styles.css) */
+    :root {
+      --bg: #f4f6fb; --kartu: #fff; --teks: #1b2233; --redup: #616c85;
+      --garis: #e3e8f3; --aksen: #4f7cff; --sukses: #20bf6b; --bahaya: #e5484d;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    :root[data-tema="gelap"] {
+      --bg: #0e1320; --kartu: #171e2f; --teks: #e9edf8; --redup: #98a2bb;
+      --garis: #27314a; --aksen: #6c8dff; --sukses: #36d17f; --bahaya: #ff6369;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 24px 16px; font-family: var(--font);
+      background: var(--bg); color: var(--teks); line-height: 1.5;
+    }
+    .bungkus { max-width: 860px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; margin: 0 0 .3rem; }
+    .redup { color: var(--redup); }
+    .kartu {
+      background: var(--kartu); border: 1px solid var(--garis);
+      border-radius: 14px; padding: 1rem 1.2rem; margin: 1rem 0;
+      box-shadow: 0 6px 20px rgba(27, 34, 51, .08);
+    }
+    .ringkasan { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .ringkasan .angka {
+      flex: 1; min-width: 130px; background: var(--bg);
+      border: 1px solid var(--garis); border-radius: 12px; padding: .7rem .9rem;
+    }
+    .ringkasan .angka b { display: block; font-size: 1.5rem; color: var(--aksen); }
+    ol { list-style: none; padding: 0; margin: 0; }
+    li {
+      display: flex; gap: .6rem; align-items: baseline;
+      padding: .42rem .2rem; border-bottom: 1px dashed var(--garis); font-size: .93rem;
+    }
+    li:last-child { border-bottom: none; }
+    .lulus { color: var(--sukses); font-weight: 700; }
+    .gagal { color: var(--bahaya); font-weight: 700; }
+    .pesan-gagal { color: var(--bahaya); font-size: .86rem; }
+    .tombol {
+      font: inherit; font-weight: 600; cursor: pointer;
+      background: var(--aksen); color: #fff; border: none;
+      border-radius: 10px; padding: .5rem 1rem;
+    }
+    a { color: var(--aksen); }
+    code { background: var(--bg); padding: .1rem .35rem; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class="bungkus">
+    <h1>🧪 Tes Otomatis Planner Harian</h1>
+    <p class="redup">
+      Pengecekan otomatis atas <code>logika.js</code>. Halaman ini berjalan langsung dari
+      <code>file://</code> tanpa server. Jalankan juga lewat terminal dengan
+      <code>node tes.js</code>.
+    </p>
+
+    <div class="kartu ringkasan" id="ringkasan">
+      <div class="angka"><span class="redup">Total</span><b id="jmlTotal">—</b></div>
+      <div class="angka"><span class="redup">Lulus</span><b id="jmlLulus">—</b></div>
+      <div class="angka"><span class="redup">Gagal</span><b id="jmlGagal">—</b></div>
+      <div class="angka"><span class="redup">Hasil</span><b id="jmlHasil">—</b></div>
+    </div>
+
+    <div class="kartu">
+      <p>
+        <button type="button" class="tombol" id="tombolUlang">↻ Jalankan ulang</button>
+        <a href="index.html" style="margin-left:1rem">← Kembali ke aplikasi</a>
+      </p>
+      <ol id="daftarHasil"></ol>
+      <p class="redup" id="catatanTeknis"></p>
+    </div>
+  </div>
+
+  <!-- Urutan skrip: logika & data contoh dulu, lalu tes -->
+  <script src="logika.js"></script>
+  <script src="contoh.js"></script>
+  <script src="tes.js"></script>
+  <script>
+    // Menampilkan hasil tes yang sudah dijalankan tes.js saat dimuat.
+    (function () {
+      "use strict";
+
+      function render() {
+        const api = window.TesPlanner;
+        const daftar = document.getElementById("daftarHasil");
+        daftar.textContent = "";
+
+        if (!api) {
+          daftar.textContent = "tes.js gagal dimuat — periksa konsol peramban.";
+          return;
+        }
+
+        document.getElementById("jmlTotal").textContent = String(api.ringkasan.total);
+        document.getElementById("jmlLulus").textContent = String(api.ringkasan.lulus);
+        document.getElementById("jmlGagal").textContent = String(api.ringkasan.gagal);
+        const hasil = document.getElementById("jmlHasil");
+        hasil.textContent = api.ringkasan.gagal === 0 ? "LULUS ✓" : "GAGAL ✗";
+        hasil.style.color = api.ringkasan.gagal === 0 ? "var(--sukses)" : "var(--bahaya)";
+
+        api.hasil.forEach(function (h, i) {
+          const li = document.createElement("li");
+          const tanda = document.createElement("span");
+          tanda.className = h.lulus ? "lulus" : "gagal";
+          tanda.textContent = h.lulus ? "✓" : "✗";
+          const nomor = document.createElement("span");
+          nomor.className = "redup";
+          nomor.textContent = String(i + 1).padStart(2, "0") + ".";
+          const teks = document.createElement("span");
+          teks.textContent = h.nama;
+          li.appendChild(tanda);
+          li.appendChild(nomor);
+          li.appendChild(teks);
+          if (!h.lulus) {
+            const pesan = document.createElement("span");
+            pesan.className = "pesan-gagal";
+            pesan.textContent = "→ " + h.pesan;
+            li.appendChild(pesan);
+          }
+          daftar.appendChild(li);
+        });
+
+        document.getElementById("catatanTeknis").textContent =
+          "Dijalankan pada " + new Date().toLocaleString("id-ID") +
+          " · lingkungan: browser (" + navigator.userAgent.split(" ").slice(-1)[0] + ")" +
+          " · versi skema " + (window.Logika ? window.Logika.VERSI_SKEMA : "?");
+      }
+
+      document.getElementById("tombolUlang").addEventListener("click", function () {
+        // Muat ulang halaman agar seluruh tes dijalankan dari awal.
+        window.location.reload();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
